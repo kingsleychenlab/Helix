@@ -7,33 +7,21 @@ export default function Controls({
   onUpload,
   busy,
   hasStructure,
-  onReset,
 }: {
   onUpload: (file: File) => void;
   busy: boolean;
   hasStructure: boolean;
-  onReset?: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {hasStructure && onReset && (
-        <button
-          className="btn text-[12px] py-1.5"
-          disabled={busy}
-          onClick={onReset}
-        >
-          ＋ New
-        </button>
-      )}
-
+    <div className="flex items-center gap-2">
       <button
-        className="btn text-[12px] py-1.5"
+        className={`btn text-[13px] py-1.5 ${hasStructure ? "" : "btn-primary"}`}
         disabled={busy}
         onClick={() => fileRef.current?.click()}
       >
-        Upload .pdb
+        {hasStructure ? "Open another .pdb" : "Upload .pdb"}
       </button>
       <input
         ref={fileRef}

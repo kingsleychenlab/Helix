@@ -147,17 +147,17 @@ def backbone_dihedrals(structure: Structure) -> DihedralResult:
             bb = res.backbone()
             if bb is not None:
                 n, ca, c = bb
-                # phi needs C of previous residue
+                # phi needs C of the previous residue, peptide-bonded to this N
                 if i > 0:
                     prev = residues[i - 1]
                     prev_c = prev.atom_coord("C")
-                    if prev_c is not None and _sequential(prev, res):
+                    if prev_c is not None and _peptide_bonded(prev, res):
                         phi = geometry.dihedral(prev_c, n, ca, c)
-                # psi needs N of next residue
+                # psi needs N of the next residue, peptide-bonded to this C
                 if i < len(residues) - 1:
                     nxt = residues[i + 1]
                     next_n = nxt.atom_coord("N")
-                    if next_n is not None and _sequential(res, nxt):
+                    if next_n is not None and _peptide_bonded(res, nxt):
                         psi = geometry.dihedral(n, ca, c, next_n)
             rows.append({
                 "index": res.index,
@@ -174,13 +174,20 @@ def backbone_dihedrals(structure: Structure) -> DihedralResult:
     return DihedralResult(rows=rows)
 
 
-def _sequential(a: Residue, b: Residue) -> bool:
-    """Heuristic: residues are peptide-bonded neighbors (no chain break).
+def _peptide_bonded(a: Residue, b: Residue, max_cn: float = 2.0) -> bool:
+    """True if residue `a` is peptide-bonded to residue `b` (a.C — b.N).
 
-    We accept them as sequential if their author sequence numbers differ by 1,
-    which is the common case and avoids computing bogus angles across gaps.
+    The C(i)–N(i+1) peptide bond is ~1.33 Å; we allow up to `max_cn` Å for
+    geometric distortion. This is the physically correct chain-continuity test:
+    it connects genuine neighbors regardless of author numbering / insertion
+    codes, and correctly breaks φ/ψ across chain gaps even when residue numbers
+    happen to stay consecutive.
     """
-    return b.seq - a.seq == 1
+    c = a.atom_coord("C")
+    n = b.atom_coord("N")
+    if c is None or n is None:
+        return False
+    return geometry.distance(c, n) <= max_cn
 
 
 def _rama_region(phi: float | None, psi: float | None) -> str:

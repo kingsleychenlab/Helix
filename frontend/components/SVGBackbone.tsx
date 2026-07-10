@@ -113,29 +113,35 @@ export default function SVGBackbone() {
     offset: ["start start", "end end"],
   });
 
-  const placeDot = (x: number, y: number) => {
-    dotRef.current?.setAttribute("cx", `${x}`);
-    dotRef.current?.setAttribute("cy", `${y}`);
-    haloRef.current?.setAttribute("cx", `${x}`);
-    haloRef.current?.setAttribute("cy", `${y}`);
+  const placeDot = (x: number, y: number, op: number) => {
+    for (const el of [dotRef.current, haloRef.current]) {
+      if (!el) continue;
+      el.setAttribute("cx", `${x}`);
+      el.setAttribute("cy", `${y}`);
+      el.setAttribute("opacity", `${op}`);
+    }
   };
+
+  // Reveal edge maps p∈[0,1] → y. At p=0 it sits ABOVE the helix so nothing
+  // colored (and no playhead) shows until you actually scroll.
+  const revealY = (p: number) => TOP - 12 + (BOT - TOP + 12) * p;
 
   useEffect(() => {
     if (reduce) {
       revealRef.current?.setAttribute("height", `${VH}`);
       const last = STRAND[STRAND.length - 1];
-      placeDot(last.x, last.y);
+      placeDot(last.x, last.y, 1);
     } else {
-      revealRef.current?.setAttribute("height", `${TOP + 14}`);
-      placeDot(STRAND[0].x, STRAND[0].y);
+      revealRef.current?.setAttribute("height", `${revealY(0)}`);
+      placeDot(STRAND[0].x, STRAND[0].y, 0);
     }
   }, [reduce]);
 
   useMotionValueEvent(scrollYProgress, "change", (p) => {
     if (reduce) return;
-    revealRef.current?.setAttribute("height", `${TOP + (BOT - TOP) * p + 14}`);
+    revealRef.current?.setAttribute("height", `${revealY(p)}`);
     const idx = Math.min(STRAND.length - 1, Math.max(0, Math.round(p * (STRAND.length - 1))));
-    placeDot(STRAND[idx].x, STRAND[idx].y);
+    placeDot(STRAND[idx].x, STRAND[idx].y, Math.min(1, p * 40));
     if (Math.abs(p - prog) > 0.006) setProg(p);
   });
 
@@ -211,7 +217,7 @@ export default function SVGBackbone() {
                   </feMerge>
                 </filter>
                 <clipPath id="hxReveal">
-                  <rect ref={revealRef} x="0" y="0" width={VW} height={TOP + 14} />
+                  <rect ref={revealRef} x="0" y="0" width={VW} height={TOP - 12} />
                 </clipPath>
               </defs>
 
@@ -248,8 +254,15 @@ export default function SVGBackbone() {
                 ))}
               </g>
 
-              {/* traveling playhead at the leading edge */}
-              <circle ref={haloRef} cx={STRAND[0].x} cy={STRAND[0].y} r="17" fill="rgba(52,229,212,0.22)" />
+              {/* traveling playhead at the leading edge (hidden until scroll) */}
+              <circle
+                ref={haloRef}
+                cx={STRAND[0].x}
+                cy={STRAND[0].y}
+                r="17"
+                fill="rgba(52,229,212,0.22)"
+                opacity="0"
+              />
               <circle
                 ref={dotRef}
                 cx={STRAND[0].x}
@@ -257,6 +270,7 @@ export default function SVGBackbone() {
                 r="6.5"
                 fill="#ffffff"
                 filter="url(#hxGlow)"
+                opacity="0"
               />
             </svg>
           </div>

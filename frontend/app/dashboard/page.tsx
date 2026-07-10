@@ -81,13 +81,6 @@ export default function Dashboard() {
     setPdbText(null);
   };
 
-  // Return to the start screen (upload).
-  const resetToStart = () => {
-    setLoaded(null);
-    setError(null);
-    resetDerived();
-  };
-
   const loadStructure = useCallback(
     async (loader: () => Promise<LoadResponse>) => {
       setLoading(true);
@@ -167,28 +160,11 @@ export default function Dashboard() {
             >
               Helix
             </Link>
-            <span className="text-[var(--border-strong)]">/</span>
-            <span className="text-[13px] text-[var(--muted)] truncate">
-              {loaded ? (
-                <>
-                  {loaded.summary.name || "Structure"}
-                  {loaded.filename && (
-                    <span className="text-[var(--faint)]">
-                      {" "}
-                      · {loaded.filename}
-                    </span>
-                  )}
-                </>
-              ) : (
-                "Load a structure"
-              )}
-            </span>
           </div>
           <Controls
             onUpload={uploadFile}
             busy={loading}
             hasStructure={!!loaded}
-            onReset={resetToStart}
           />
         </div>
       </header>
