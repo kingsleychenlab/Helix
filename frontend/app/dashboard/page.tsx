@@ -36,6 +36,14 @@ export default function Dashboard() {
   const [residue, setResidue] = useState<ResidueDetail | null>(null);
   const [residueLoading, setResidueLoading] = useState(false);
 
+  // Changing representation clears the current selection so no highlight
+  // lingers from the previous style.
+  const changeStyle = (s: ViewStyle) => {
+    setStyle(s);
+    setSelectedIndex(null);
+    setResidue(null);
+  };
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -230,7 +238,7 @@ export default function Dashboard() {
               actions={
                 <ViewerToolbar
                   style={style}
-                  setStyle={setStyle}
+                  setStyle={changeStyle}
                   colorByChain={colorByChain}
                   setColorByChain={setColorByChain}
                 />
